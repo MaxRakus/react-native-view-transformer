@@ -7,7 +7,7 @@ import ReactNative, {
   Easing,
   NativeModules
 } from 'react-native';
-
+import PropTypes from 'prop-types';
 import {createResponder} from 'react-native-gesture-responder';
 import Scroller from 'react-native-scroller';
 import {Rect, Transform, transformedRect, availableTranslateSpace, fitCenterRect, alignedRect, getTransform} from './TransformUtils';
@@ -33,6 +33,10 @@ export default class ViewTransformer extends React.Component {
       height: 0,
       pageX: 0,
       pageY: 0,
+      overTop: 0,
+      overBottom: 0,
+      overLeft: 0,
+      overRight: 0,
     };
     this._viewPortRect = new Rect(); //A holder to avoid new too much
 
@@ -170,6 +174,7 @@ export default class ViewTransformer extends React.Component {
 
     let dx = gestureState.moveX - gestureState.previousMoveX;
     let dy = gestureState.moveY - gestureState.previousMoveY;
+    let scaleBy;
     if (this.props.enableResistance) {
       let d = this.applyResistance(dx, dy);
       dx = d.dx;
@@ -182,7 +187,7 @@ export default class ViewTransformer extends React.Component {
 
     let transform = {};
     if (gestureState.previousPinch && gestureState.pinch && this.props.enableScale) {
-      let scaleBy = gestureState.pinch / gestureState.previousPinch;
+      scaleBy = gestureState.pinch / gestureState.previousPinch;
       let pivotX = gestureState.moveX - this.state.pageX;
       let pivotY = gestureState.moveY - this.state.pageY;
 
@@ -196,16 +201,38 @@ export default class ViewTransformer extends React.Component {
       ));
       transform = getTransform(this.contentRect(), rect);
     } else {
+      scaleBy = 0;
       if (Math.abs(dx) > 2 * Math.abs(dy)) {
         dy = 0;
       } else if (Math.abs(dy) > 2 * Math.abs(dx)) {
         dx = 0;
       }
+
+      if (dx !== 0) {
+        transform.overRight = this.state.overRight + dx;
+        transform.overLeft = this.state.overLeft - dx;
+      }
+      if (dy !== 0) {
+        transform.overTop = this.state.overTop - dy;
+        transform.overBottom = this.state.overBottom + dy;
+      }
+
       transform.translateX = this.state.translateX + dx / this.state.scale;
       transform.translateY = this.state.translateY + dy / this.state.scale;
     }
 
-    this.updateTransform(transform);
+    if (this.state.overTop - dy >= 0
+        && this.state.overBottom + dy >= 0
+        && this.state.overLeft - dx >= 0
+        && this.state.overRight + dx >= 0) {
+      if (scaleBy > 1 && (transform.scale < 2)) {
+        this.updateTransform(transform);
+      } else if (scaleBy < 1 && (transform.scale > 1)) {
+        this.updateTransform(transform);
+      } else if (scaleBy === 0) {
+        this.updateTransform(transform);
+      }
+    }
     return true;
   }
 
@@ -219,6 +246,13 @@ export default class ViewTransformer extends React.Component {
       return;
     }
 
+    let availablePanDistance = availableTranslateSpace(this.transformedContentRect(), this.viewPortRect());
+    this.setState({
+      overTop: availablePanDistance.top,
+      overBottom: availablePanDistance.bottom,
+      overLeft: availablePanDistance.left,
+      overRight: availablePanDistance.right,
+    });
 
     if (gestureState.doubleTapUp) {
       if (!this.props.enableScale) {
@@ -236,18 +270,31 @@ export default class ViewTransformer extends React.Component {
 
       this.performDoubleTapUp(pivotX, pivotY);
     } else {
-      if(this.props.enableTranslate) {
-        this.performFling(gestureState.vx, gestureState.vy);
+      if (this.props.enableTranslate) {
+        if (availablePanDistance.top < 0
+          || availablePanDistance.bottom < 0
+          || availablePanDistance.left < 0
+          || availablePanDistance.right < 0) {
+          this.setState({
+            overTop: 0,
+            overBottom: 0,
+            overLeft: 0,
+            overRight: 0,
+          });
+          this.performFling(gestureState.vx, gestureState.vy);
+        } else {
+          this.setState({
+            overTop: availablePanDistance.top,
+            overBottom: availablePanDistance.bottom,
+            overLeft: availablePanDistance.left,
+            overRight: availablePanDistance.right,
+          });
+        }
       } else {
         this.animateBounce();
       }
     }
   }
-
-
-
-
-
 
   performFling(vx, vy) {
     let startX = 0;
@@ -370,7 +417,8 @@ export default class ViewTransformer extends React.Component {
     Animated.timing(this.state.animator, {
       toValue: 1,
       duration: duration,
-      easing: Easing.inOut(Easing.ease)
+      easing: Easing.inOut(Easing.ease),
+      useNativeDriver: true,
     }).start();
   }
 
@@ -421,36 +469,36 @@ ViewTransformer.propTypes = {
   /**
    * Use false to disable transform. Default is true.
    */
-  enableTransform: React.PropTypes.bool,
+  enableTransform: PropTypes.bool,
 
   /**
    * Use false to disable scaling. Default is true.
    */
-  enableScale: React.PropTypes.bool,
+  enableScale: PropTypes.bool,
 
   /**
    * Use false to disable translateX/translateY. Default is true.
    */
-  enableTranslate: React.PropTypes.bool,
+  enableTranslate: PropTypes.bool,
 
   /**
    * Default is 20
    */
-  maxOverScrollDistance: React.PropTypes.number,
+  maxOverScrollDistance: PropTypes.number,
 
-  maxScale: React.PropTypes.number,
-  contentAspectRatio: React.PropTypes.number,
+  maxScale: PropTypes.number,
+  contentAspectRatio: PropTypes.number,
 
   /**
    * Use true to enable resistance effect on over pulling. Default is false.
    */
-  enableResistance: React.PropTypes.bool,
+  enableResistance: PropTypes.bool,
 
-  onViewTransformed: React.PropTypes.func,
+  onViewTransformed: PropTypes.func,
 
-  onTransformGestureReleased: React.PropTypes.func,
+  onTransformGestureReleased: PropTypes.func,
 
-  onSingleTapConfirmed: React.PropTypes.func
+  onSingleTapConfirmed: PropTypes.func
 };
 ViewTransformer.defaultProps = {
   maxOverScrollDistance: 20,
@@ -458,5 +506,5 @@ ViewTransformer.defaultProps = {
   enableTranslate: true,
   enableTransform: true,
   maxScale: 1,
-  enableResistance: false
+  enableResistance: false,
 };
