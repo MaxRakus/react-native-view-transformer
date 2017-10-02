@@ -406,6 +406,10 @@ export default class ViewTransformer extends React.Component {
       let bottom = fromRect.bottom + (targetRect.bottom - fromRect.bottom) * progress;
 
       let transform = getTransform(this.contentRect(), new Rect(left, top, right, bottom));
+      transform.overTop = 0;
+      transform.overBottom = 0;
+      transform.overLeft = 0;
+      transform.overRight = 0;
       this.updateTransform(transform);
     });
 
