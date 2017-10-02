@@ -153,9 +153,14 @@ export default class ViewTransformer extends React.Component {
     NativeModules.UIManager.measure(handle, ((x, y, width, height, pageX, pageY) => {
       if(typeof pageX === 'number' && typeof pageY === 'number') { //avoid undefined values on Android devices
         if(this.state.pageX !== pageX || this.state.pageY !== pageY) {
+          const availablePanDistance = availableTranslateSpace(this.transformedContentRect(), this.viewPortRect());
           this.setState({
             pageX: pageX,
-            pageY: pageY
+            pageY: pageY,
+            overTop: availablePanDistance.top,
+            overBottom: availablePanDistance.bottom,
+            overLeft: availablePanDistance.left,
+            overRight: availablePanDistance.right,
           });
         }
       }
@@ -174,7 +179,6 @@ export default class ViewTransformer extends React.Component {
 
     let dx = gestureState.moveX - gestureState.previousMoveX;
     let dy = gestureState.moveY - gestureState.previousMoveY;
-    let scaleBy;
     if (this.props.enableResistance) {
       let d = this.applyResistance(dx, dy);
       dx = d.dx;
@@ -187,7 +191,7 @@ export default class ViewTransformer extends React.Component {
 
     let transform = {};
     if (gestureState.previousPinch && gestureState.pinch && this.props.enableScale) {
-      scaleBy = gestureState.pinch / gestureState.previousPinch;
+      const scaleBy = gestureState.pinch / gestureState.previousPinch;
       let pivotX = gestureState.moveX - this.state.pageX;
       let pivotY = gestureState.moveY - this.state.pageY;
 
@@ -201,7 +205,6 @@ export default class ViewTransformer extends React.Component {
       ));
       transform = getTransform(this.contentRect(), rect);
     } else {
-      scaleBy = 0;
       if (Math.abs(dx) > 2 * Math.abs(dy)) {
         dy = 0;
       } else if (Math.abs(dy) > 2 * Math.abs(dx)) {
@@ -221,17 +224,15 @@ export default class ViewTransformer extends React.Component {
       transform.translateY = this.state.translateY + dy / this.state.scale;
     }
 
-    if (this.state.overTop - dy >= 0
+    if (transform.scale) {
+      if (transform.scale >= 1 && transform.scale <= 7) {
+        this.updateTransform(transform);
+      }
+    } else if (this.state.overTop - dy >= 0
         && this.state.overBottom + dy >= 0
         && this.state.overLeft - dx >= 0
         && this.state.overRight + dx >= 0) {
-      if (scaleBy > 1 && (transform.scale < 2)) {
-        this.updateTransform(transform);
-      } else if (scaleBy < 1 && (transform.scale > 1)) {
-        this.updateTransform(transform);
-      } else if (scaleBy === 0) {
-        this.updateTransform(transform);
-      }
+          this.updateTransform(transform);
     }
     return true;
   }
@@ -246,13 +247,7 @@ export default class ViewTransformer extends React.Component {
       return;
     }
 
-    let availablePanDistance = availableTranslateSpace(this.transformedContentRect(), this.viewPortRect());
-    this.setState({
-      overTop: availablePanDistance.top,
-      overBottom: availablePanDistance.bottom,
-      overLeft: availablePanDistance.left,
-      overRight: availablePanDistance.right,
-    });
+    const availablePanDistance = availableTranslateSpace(this.transformedContentRect(), this.viewPortRect());
 
     if (gestureState.doubleTapUp) {
       if (!this.props.enableScale) {
