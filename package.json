@@ -1,23 +1,46 @@
 {
-  "name": "react-native-view-transformer",
-  "version": "0.0.28",
-  "description": "A pure JavaScript RN component that makes ANY views transformable using gestures like pinch, double tap or pull.",
-  "main": "library/index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "_from": "git+https://github.com/MaxRakus/react-native-view-transformer.git",
+  "_id": "react-native-view-transformer@0.0.28",
+  "_inBundle": false,
+  "_integrity": "sha1-xxHd5AHkGU7EwH5nVvFmnvZVcNk=",
+  "_location": "/react-native-view-transformer",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "git",
+    "raw": "git+https://github.com/MaxRakus/react-native-view-transformer.git",
+    "rawSpec": "git+https://github.com/MaxRakus/react-native-view-transformer.git",
+    "saveSpec": "git+https://github.com/MaxRakus/react-native-view-transformer.git",
+    "fetchSpec": "https://github.com/MaxRakus/react-native-view-transformer.git",
+    "gitCommittish": "master"
   },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "git+https://github.com/MaxRakus/react-native-view-transformer.git#a5de990dea0aef1965ef94ada6fb76f9b6250b1b",
+  "_spec": "git+https://github.com/MaxRakus/react-native-view-transformer.git",
+  "_where": "/Users/max/Documents/projects/champion11-frontend-reactnative",
   "author": "",
+  "bugs": {
+    "url": "https://github.com/ldn0x7dc/react-native-view-transformer/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "react-native-gesture-responder": "0.1.1",
+    "react-native-scroller": "0.0.6"
+  },
+  "deprecated": false,
+  "description": "A pure JavaScript RN component that makes ANY views transformable using gestures like pinch, double tap or pull.",
+  "homepage": "https://github.com/ldn0x7dc/react-native-view-transformer#readme",
   "license": "ISC",
+  "main": "library/index.js",
+  "name": "react-native-view-transformer",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ldn0x7dc/react-native-view-transformer.git"
   },
-  "bugs": {
-    "url": "https://github.com/ldn0x7dc/react-native-view-transformer/issues"
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "homepage": "https://github.com/ldn0x7dc/react-native-view-transformer#readme",
-  "dependencies": {
-    "react-native-gesture-responder": "0.1.1",
-    "react-native-scroller": "0.0.6"
-  }
+  "version": "0.0.28"
 }
